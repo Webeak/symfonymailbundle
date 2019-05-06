@@ -1,0 +1,9 @@
+doctrine:
+    orm:
+        mappings:
+            MailBundle:
+                type: annotation
+                dir: "Bridge/Doctrine/Orm/Entity"
+                alias: MailBundle
+                prefix: "Webeak\\Bundle\\MailBundle\\Bridge\\Doctrine\\Orm\\Entity"
+                is_bundle: true
