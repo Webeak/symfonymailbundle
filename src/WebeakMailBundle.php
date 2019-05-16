@@ -7,7 +7,7 @@ use Webeak\Bundle\MailBundle\DependencyInjection\Compiler\RegisterSpoolerListene
 use Webeak\Bundle\MailBundle\DependencyInjection\Compiler\RegisterTrackerListenersPass;
 use Webeak\Bundle\MailBundle\DependencyInjection\WebeakMailExtension;
 
-class MailBundle extends Bundle
+class WebeakMailBundle extends Bundle
 {
     /**
      * {@inheritDoc}

@@ -1,7 +1,7 @@
 doctrine:
     orm:
         mappings:
-            MailBundle:
+            WebeakMailBundle:
                 type: annotation
                 dir: "Bridge/Doctrine/Orm/Entity"
                 alias: MailBundle

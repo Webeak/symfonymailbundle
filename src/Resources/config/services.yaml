@@ -99,7 +99,7 @@ services:
         arguments:
             - '@twig'
             - '@Webeak\Bundle\EssentialBundle\UniqueIdGenerator'
-            - '%wb_mail.http_root%'
+            - '%wb.mail.http_root%'
         shared: false
         public: true
 
