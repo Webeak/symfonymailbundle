@@ -21,7 +21,7 @@
         "webeak/error-tracker-bundle": "^1.0"
     },
     "autoload": {
-        "psr-4": { "Webeak\\Bundle\\MailBundle\\WebeakMailBundle\\": "src/" },
+        "psr-4": { "Webeak\\Bundle\\MailBundle\\": "src/" },
         "exclude-from-classmap": [
             "/Tests/"
         ]
