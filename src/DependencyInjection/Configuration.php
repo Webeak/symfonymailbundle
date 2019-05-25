@@ -18,9 +18,12 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('wb_mail');
-
+        $treeBuilder = new TreeBuilder('wb_mail');
+        if (method_exists($treeBuilder, 'getRootNode')) {
+            $rootNode = $treeBuilder->getRootNode();
+        } else {
+            $rootNode = $treeBuilder->root('wb_mail');
+        }
         $rootNode
             ->children()
                 ->scalarNode('http_root')
