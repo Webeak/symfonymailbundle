@@ -1,6 +1,7 @@
 <?php
 namespace Webeak\Bundle\MailBundle\Bridge\SwiftMailer;
 
+use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Environment;
 use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
 use Webeak\Bundle\MailBundle\MessageInterface;
@@ -77,7 +78,7 @@ class SwiftMessage implements MessageInterface, \Serializable
     /** @var array */
     private $attachments;
 
-    public function __construct(Environment $twig, UniqueIdGenerator $uniqueIdGenerator, $baseUrl)
+    public function __construct(RequestStack $requestStack, Environment $twig, UniqueIdGenerator $uniqueIdGenerator)
     {
         $this->twig = $twig;
         $this->instance = new \Swift_Message();
@@ -88,7 +89,7 @@ class SwiftMessage implements MessageInterface, \Serializable
         $this->variables = [];
         $this->extras = [];
         $this->attachments = [];
-        $this->baseUrl = $baseUrl ? rtrim($baseUrl, '/') : '/';
+        $this->baseUrl = $requestStack->getCurrentRequest()->getSchemeAndHttpHost();
     }
 
     /**

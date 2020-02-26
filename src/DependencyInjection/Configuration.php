@@ -26,10 +26,6 @@ class Configuration implements ConfigurationInterface
         }
         $rootNode
             ->children()
-                ->scalarNode('http_root')
-                    ->info('HTTP path pointing to the "public" directory of the project.')
-                    ->defaultNull()
-                ->end()
                 ->arrayNode('tracker')
                     ->addDefaultsIfNotSet()
                     ->children()

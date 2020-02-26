@@ -28,8 +28,6 @@ class WebeakMailExtension extends Extension implements PrependExtensionInterface
     {
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
-
-        $container->setParameter('wb.mail.http_root', $config['http_root']);
         $container->setParameter('wb.mail.tracker', [
             'message_entity_class' => trim(str_replace('/', '\\', $config['tracker']['message_entity_class']), '\\'),
             'message_entity_identifier_attr' => $config['tracker']['message_entity_identifier_attr'],
