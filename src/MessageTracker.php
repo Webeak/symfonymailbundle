@@ -1,6 +1,7 @@
 <?php
 namespace Webeak\Bundle\MailBundle;
 
+use Symfony\Component\Routing\RouterInterface;
 use Webeak\Bundle\ErrorTrackerBundle\ErrorTrackerInterface;
 use Webeak\Bundle\EssentialBundle\Exception\InvalidArgumentException;
 use Webeak\Bundle\EssentialBundle\Exception\InvalidConfigurationException;
@@ -11,7 +12,6 @@ use Webeak\Bundle\MailBundle\Bridge\Doctrine\Orm\Entity\TrackedMessageEntityInte
 use Webeak\Bundle\MailBundle\Event\MessageTrackerOnCreateMessageEntityEvent;
 use Webeak\Bundle\MailBundle\Event\MessageTrackerOnCreateMessageLinkEvent;
 use Doctrine\ORM\EntityManager;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webeak\Component\Utils\ArrayUtils;
@@ -24,7 +24,7 @@ class MessageTracker
     /** @var EntityManager */
     private $entityManager;
 
-    /** @var Router */
+    /** @var RouterInterface */
     private $router;
 
     /** @var EventDispatcher */
@@ -73,7 +73,7 @@ class MessageTracker
     /** @var boolean */
     private $hasBeenFlushed;
 
-    public function __construct(Router $router,
+    public function __construct(RouterInterface $router,
                                 EntityManager $entityManager,
                                 UniqueIdGenerator $uniqueIdGenerator,
                                 ErrorTrackerInterface $errorTracker,

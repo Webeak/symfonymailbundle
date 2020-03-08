@@ -2,6 +2,7 @@
 namespace Webeak\Bundle\MailBundle;
 
 use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment;
 use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnBatchEndEvent;
@@ -13,7 +14,6 @@ use Webeak\Bundle\MailBundle\Event\SpoolerOnSendAbandonEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnSendEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnSendFailureEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnSendSuccessEvent;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -31,7 +31,7 @@ class Spooler
     /** @var \Twig_Environment */
     private $twig;
 
-    /** @var Router */
+    /** @var RouterInterface */
     private $router;
 
     /** @var EventDispatcher */
@@ -44,7 +44,7 @@ class Spooler
     private $configuration;
 
     public function __construct(Environment $twig,
-                                Router $router,
+                                RouterInterface $router,
                                 MailerInterface $mailer,
                                 UniqueIdGenerator $uniqueIdGenerator,
                                 array $configuration)
@@ -399,7 +399,7 @@ class Spooler
      *
      * @return string the rendered source code
      *
-     * @throws 
+     * @throws
      */
     private function renderMessageTemplate(MessageInterface $message, $type)
     {
@@ -438,7 +438,7 @@ class Spooler
         if ($message->webview()) {
             $message->addVariables([
                 '_webViewLink' =>
-                    $this->router->generate('wb_mail_webview', ['identifier' => $message->getIdentifier()], Router::ABSOLUTE_URL)
+                    $this->router->generate('wb_mail_webview', ['identifier' => $message->getIdentifier()], RouterInterface::ABSOLUTE_URL)
             ]);
         }
     }

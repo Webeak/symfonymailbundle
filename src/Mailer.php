@@ -2,7 +2,7 @@
 namespace Webeak\Bundle\MailBundle;
 
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Routing\Router;
+use Symfony\Component\Routing\RouterInterface;
 use Webeak\Bundle\EssentialBundle\Exception\BadMethodCallException;
 use Doctrine\ORM\EntityManager;
 use Webeak\Component\Utils\ArrayUtils;
@@ -12,9 +12,9 @@ use Webeak\Component\Utils\ArrayUtils;
  */
 class Mailer
 {
-    /** @var Router */
+    /** @var RouterInterface */
     private $router;
-    
+
     /** @var MessageBuilderFactory */
     private $messageBuilderFactory;
 
@@ -30,7 +30,7 @@ class Mailer
     /** @var MessageBuilderInterface */
     private $currentBuilder;
 
-    public function __construct(Router $router,
+    public function __construct(RouterInterface $router,
                                 MessageBuilderFactory $messageBuilderFactory,
                                 MessageTracker $messageTracker,
                                 Spooler $spooler)
