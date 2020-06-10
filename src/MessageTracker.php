@@ -262,8 +262,10 @@ class MessageTracker
             foreach ($this->waitingForPersist as $entity) {
                 $this->entityManager->persist($entity);
             }
-            $this->entityManager->flush($this->waitingForPersist);
-            $this->waitingForPersist = [];
+            if (count($this->waitingForPersist) > 0) {
+                $this->entityManager->flush($this->waitingForPersist);
+                $this->waitingForPersist = [];
+            }
             $this->hasBeenFlushed = true;
         } catch (\Exception | \Throwable $e) {
             $this->errorTracker->track(new RuntimeException(
