@@ -80,6 +80,7 @@ class SwiftMessage implements MessageInterface, \Serializable
 
     public function __construct(RequestStack $requestStack, Environment $twig, UniqueIdGenerator $uniqueIdGenerator)
     {
+        $currentRequest = $requestStack->getCurrentRequest();
         $this->twig = $twig;
         $this->instance = new \Swift_Message();
         $this->identifier = $uniqueIdGenerator->generateId(8);
@@ -89,7 +90,7 @@ class SwiftMessage implements MessageInterface, \Serializable
         $this->variables = [];
         $this->extras = [];
         $this->attachments = [];
-        $this->baseUrl = $requestStack->getCurrentRequest()->getSchemeAndHttpHost();
+        $this->baseUrl = $currentRequest ? $currentRequest->getSchemeAndHttpHost() : '/';
     }
 
     /**
@@ -423,8 +424,8 @@ class SwiftMessage implements MessageInterface, \Serializable
      * @param string $template
      *
      * @return $this|string
-     * 
-     * @throws 
+     *
+     * @throws
      */
     public function setHtml($template = null)
     {
