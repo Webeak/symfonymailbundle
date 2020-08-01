@@ -214,7 +214,7 @@ class Spooler
                     $identifier = substr($filename, 0, strpos($filename, '.', 0));
                     $newName = substr($filename, 0, -8);
                     $try = intval(substr($newName, strrpos($newName, 'r', 0) + 1));
-                    if ($try < $this->configuration['max_retry_count']) {
+                    if ($message instanceof MessageInterface && $try < $this->configuration['max_retry_count']) {
                         ++$try;
                         $this->dispatcher->dispatch(Events::spoolerOnRetry, new SpoolerOnRetryEvent(
                             $message,
@@ -227,8 +227,13 @@ class Spooler
                         if ($output) { $output->writeLn(sprintf('<info>%s</info> requeued.', $identifier)); }
                     } else {
                         @unlink($fullpath);
-                        if ($output) { $output->writeLn(sprintf('<error>Abandoning</error> <info>%s</info>. Max retry count reached.', $identifier)); }
-                        $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, 'Maximum number of tries reached in recover.'));
+                        if (!($message instanceof MessageInterface)) {
+                            $message = sprintf('Failed to unserialize message at path "%s".', $fullpath);
+                        } else {
+                            $message = 'Maximum number of tries reached in recover.';
+                        }
+                        if ($output) { $output->writeLn(sprintf('<error>Abandoning</error> <info>%s</info>. %s', $identifier, $message)); }
+                        $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $message));
                     }
                 }
             }
