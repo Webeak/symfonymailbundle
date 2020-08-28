@@ -4,6 +4,7 @@ namespace Webeak\Bundle\MailBundle;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment;
+use Webeak\Bundle\EssentialBundle\StaticLogger;
 use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnBatchEndEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnCreateWebViewsEvent;
@@ -295,6 +296,7 @@ class Spooler
             }
             $finalMessage = $message->getInstance();
             if ($this->mailer->send($finalMessage) > 0) { // TODO: use the second parameter of the send() method to handle partial success.
+                StaticLogger::notice('Message sent', ['message' => $message]);
                 $this->dispatcher->dispatch(Events::spoolerOnSendSuccess, new SpoolerOnSendSuccessEvent($message));
                 if ($message->webview()) {
                     $this->dispatcher->dispatch(Events::spoolerOnCreateWebViews, new SpoolerOnCreateWebViewsEvent($message));
@@ -305,6 +307,7 @@ class Spooler
                 $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, 'Mailer failed to send with no exception.'));
             }
         } catch (\Exception $e) {
+            StaticLogger::critical(sprintf('Failed to send email: %s.', $e->getMessage()), ['message' => $message, 'exception' => $e]);
             $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
         }
         return false;
@@ -347,6 +350,7 @@ class Spooler
                 $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $reason));
             }
         } catch (\Exception | \Throwable $e) {
+            StaticLogger::critical(sprintf('Failed to schedule message: %s', $e->getMessage()), ['message' => $message, 'exception' => $e]);
             $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
         }
         return true;
