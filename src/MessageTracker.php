@@ -259,10 +259,10 @@ class MessageTracker
     public function flush()
     {
         try {
-            foreach ($this->waitingForPersist as $entity) {
-                $this->entityManager->persist($entity);
-            }
             if (count($this->waitingForPersist) > 0) {
+                foreach ($this->waitingForPersist as $entity) {
+                    $this->entityManager->persist($entity);
+                }
                 $this->entityManager->flush($this->waitingForPersist);
                 $this->waitingForPersist = [];
             }

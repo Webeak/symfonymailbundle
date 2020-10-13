@@ -33,6 +33,7 @@ services:
             - '@router'
             - '@Webeak\Bundle\MailBundle\MailerInterface'
             - '@Webeak\Bundle\EssentialBundle\UniqueIdGenerator'
+            - '@Webeak\Bundle\HeavyTaskBundle\HeavyTaskManager'
             - '%wb.mail.spooler%'
 
     Webeak\Bundle\MailBundle\MessageBuilderFactory:
@@ -80,13 +81,6 @@ services:
             - { name: 'wb.mail.spooler_event_listener', event: 'spooler:batch-end', method: onBatchEnd }
             - { name: 'kernel.event_listener', event: 'kernel.terminate', method: onKernelTerminate, priority: 0 }
 
-    Webeak\Bundle\MailBundle\EventListener\EmailSenderListener:
-        arguments:
-            - '@Webeak\Bundle\MailBundle\Spooler'
-        tags:
-            - { name: 'kernel.event_listener', event: 'kernel.exception', method: onKernelException }
-            - { name: 'kernel.event_listener', event: 'kernel.terminate', method: onKernelTerminate, priority: 1 }
-
     #
     # SwiftMailer implementations
     #
@@ -116,3 +110,15 @@ services:
             - '@Webeak\Bundle\MailBundle\Spooler'
         tags:
             - { name: 'console.command', command: 'wb:mail:flush-spooler' }
+
+    #
+    # Heavy tasks
+    #
+    Webeak\Bundle\MailBundle\HeavyTask\FlushSpoolerTask:
+        parent: Webeak\Bundle\HeavyTaskBundle\AbstractHeavyTask
+        arguments:
+            - '@Webeak\Bundle\MailBundle\Spooler'
+            - '@Webeak\Bundle\MailBundle\MessageTracker'
+        autowire: false
+        autoconfigure: false
+        public: true

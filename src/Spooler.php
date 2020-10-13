@@ -6,6 +6,7 @@ use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment;
 use Webeak\Bundle\EssentialBundle\StaticLogger;
 use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
+use Webeak\Bundle\HeavyTaskBundle\HeavyTaskManager;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnBatchEndEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnCreateWebViewsEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnInstantSendEvent;
@@ -20,6 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Finder\Finder;
+use Webeak\Bundle\MailBundle\HeavyTask\FlushSpoolerTask;
 
 /**
  * The role of the spooler is to ensure emails are sent at a controlled rate and in a priority order.
@@ -41,6 +43,9 @@ class Spooler
     /** @var UniqueIdGenerator */
     private $uniqueIdGenerator;
 
+    /** @var HeavyTaskManager */
+    private $heavyTaskManager;
+
     /** @var array */
     private $configuration;
 
@@ -48,6 +53,7 @@ class Spooler
                                 RouterInterface $router,
                                 MailerInterface $mailer,
                                 UniqueIdGenerator $uniqueIdGenerator,
+                                HeavyTaskManager $heavyTaskManager,
                                 array $configuration)
     {
         $this->mailer = $mailer;
@@ -55,6 +61,7 @@ class Spooler
         $this->router = $router;
         $this->uniqueIdGenerator = $uniqueIdGenerator;
         $this->configuration = $configuration;
+        $this->heavyTaskManager = $heavyTaskManager;
         $this->dispatcher = new EventDispatcher();
 
         $this->configuration['save_path'] = $this->ensurePathExists($this->configuration['save_path']);
@@ -229,12 +236,12 @@ class Spooler
                     } else {
                         @unlink($fullpath);
                         if (!($message instanceof MessageInterface)) {
-                            $message = sprintf('Failed to unserialize message at path "%s".', $fullpath);
+                            $errorMessage = sprintf('Failed to unserialize message at path "%s".', $fullpath);
                         } else {
-                            $message = 'Maximum number of tries reached in recover.';
+                            $errorMessage = 'Maximum number of tries reached in recover.';
                         }
-                        if ($output) { $output->writeLn(sprintf('<error>Abandoning</error> <info>%s</info>. %s', $identifier, $message)); }
-                        $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $message));
+                        if ($output) { $output->writeLn(sprintf('<error>Abandoning</error> <info>%s</info>. %s', $identifier, $errorMessage)); }
+                        $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $errorMessage));
                     }
                 }
             }
@@ -353,6 +360,7 @@ class Spooler
             StaticLogger::critical(sprintf('Failed to schedule message: %s', $e->getMessage()), ['message' => $message, 'exception' => $e]);
             $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
         }
+        $this->heavyTaskManager->start(FlushSpoolerTask::class, ['unique' => true]);
         return true;
     }
 
