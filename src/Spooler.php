@@ -355,6 +355,7 @@ class Spooler
                 $reason = sprintf('Failed to write "%s".', $path);
                 $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $reason));
                 $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $reason));
+                throw new \RuntimeException($reason);
             }
         } catch (\Exception | \Throwable $e) {
             StaticLogger::critical(sprintf('Failed to schedule message: %s', $e->getMessage()), ['message' => $message, 'exception' => $e]);
