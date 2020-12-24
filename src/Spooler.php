@@ -21,7 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Finder\Finder;
-use Webeak\Bundle\MailBundle\HeavyTask\FlushSpoolerTask;
+use Webeak\Bundle\MailBundle\HeavyTask\WatchMercureLogs;
 
 /**
  * The role of the spooler is to ensure emails are sent at a controlled rate and in a priority order.
@@ -361,7 +361,7 @@ class Spooler
             StaticLogger::critical(sprintf('Failed to schedule message: %s', $e->getMessage()), ['message' => $message, 'exception' => $e]);
             $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
         }
-        $this->heavyTaskManager->start(FlushSpoolerTask::class, ['unique' => true]);
+        $this->heavyTaskManager->start(WatchMercureLogs::class, ['unique' => true]);
         return true;
     }
 
