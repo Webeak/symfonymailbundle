@@ -38,7 +38,7 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
     protected $failed;
 
     /**
-     * @ORM\Column(type="json_array", nullable=true)
+     * @ORM\Column(type="json", nullable=true)
      */
     protected $failureReasons;
 
