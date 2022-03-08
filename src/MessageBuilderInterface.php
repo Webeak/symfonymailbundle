@@ -247,6 +247,16 @@ interface MessageBuilderInterface
     public function webview($value = null);
 
     /**
+     * Add a custom text header.
+     *
+     * @param string $name
+     * @param string $value
+     *
+     * @return mixed
+     */
+    public function addTextHeader(string $name, string $value);
+    
+    /**
      * Get the message behind the builder.
      *
      * @return MessageInterface

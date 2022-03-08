@@ -399,6 +399,20 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
     }
 
     /**
+     * Add a custom text header.
+     *
+     * @param string $name
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function addTextHeader(string $name, string $value)
+    {
+        $this->message->addTextHeader($name, $value);
+        return $this;
+    }
+
+    /**
      * Get/Set if the email should be accessible by a browser.
      *
      * If set to true a persist copy of the email will be kept on the server hard drive FOR EACH RECIPIENT.

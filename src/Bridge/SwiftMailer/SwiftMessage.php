@@ -77,7 +77,7 @@ class SwiftMessage implements MessageInterface, \Serializable
 
     /** @var array */
     private $attachments;
-
+    
     public function __construct(RequestStack $requestStack, Environment $twig, UniqueIdGenerator $uniqueIdGenerator)
     {
         $currentRequest = $requestStack->getCurrentRequest();
@@ -533,6 +533,19 @@ class SwiftMessage implements MessageInterface, \Serializable
     public function getVariables()
     {
         return array_merge(['_baseUrl' => $this->baseUrl], $this->variables);
+    }
+
+    /**
+     * Add a custom text header.
+     *
+     * @param string $name
+     * @param string $value
+     *
+     * @return mixed
+     */
+    public function addTextHeader(string $name, string $value)
+    {
+        $this->instance->getHeaders()->addTextHeader($name, $value);
     }
 
     /**
