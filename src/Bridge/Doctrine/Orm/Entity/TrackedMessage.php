@@ -117,6 +117,29 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
     }
 
     /**
+     * Gets the subject of the message.
+     *
+     * @return string|null
+     */
+    public function getSubject()
+    {
+        return $this->subject;
+    }
+
+    /**
+     * Sets the subject of the message.
+     *
+     * @param string $subject
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setSubject(?string $subject)
+    {
+        $this->subject = $subject;
+        return $this;
+    }
+
+    /**
      * Set if the message is sent.
      *
      * @param boolean $value

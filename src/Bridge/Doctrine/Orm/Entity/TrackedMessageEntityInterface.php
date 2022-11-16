@@ -13,6 +13,15 @@ interface TrackedMessageEntityInterface
     public function getIdentifier();
 
     /**
+     * Sets the subject of the message.
+     *
+     * @param string $subject
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setSubject(?string $subject);
+
+    /**
      * Sets the unique string identifier of the message.
      *
      * @param string $identifier

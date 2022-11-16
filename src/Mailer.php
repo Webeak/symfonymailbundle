@@ -119,12 +119,11 @@ class Mailer
      *
      * @param MessageInterface|MessageBuilderInterface|MessageInterface[]|MessageBuilderInterface[] $messages
      *
-     * @return $this
+     * @return integer number of messages successfully sent
      */
     public function sendNow($messages)
     {
-        $this->spooler->instant($this->ensureArrayOfMessages($messages));
-        return $this;
+        return $this->spooler->instant($this->ensureArrayOfMessages($messages));
     }
 
     /**

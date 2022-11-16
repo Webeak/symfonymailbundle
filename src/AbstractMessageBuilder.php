@@ -1,6 +1,8 @@
 <?php
 namespace Webeak\Bundle\MailBundle;
 
+use Webeak\Component\Utils\ArrayUtils;
+
 /**
  * Offers an handy way to construct a message.
  */
@@ -8,6 +10,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
 {
     /** @var MessageInterface */
     protected $message;
+
+    /** @var array */
+    protected $deferredCalls;
 
     public function __construct(MessageInterface $message)
     {
@@ -26,7 +31,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($subject === null) {
             return $this->message->getSubject();
         }
-        $this->message->setSubject($subject);
+        $this->deferredCalls[] = function() use ($subject) {
+            $this->message->setSubject($subject);
+        };
         return $this;
     }
 
@@ -43,7 +50,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($addresses === null) {
             return $this->message->getFrom();
         }
-        $this->message->setFrom($addresses, $name);
+        $this->deferredCalls[] = function() use ($addresses, $name) {
+            $this->message->setFrom($addresses, $name);
+        };
         return $this;
     }
 
@@ -69,7 +78,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($addresses === null) {
             return $this->message->getTo();
         }
-        $this->message->setTo($addresses, $name);
+        $this->deferredCalls[] = function() use ($addresses, $name) {
+            $this->message->setTo($addresses, $name);
+        };
         return $this;
     }
 
@@ -86,7 +97,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function andTo($addresses, $name = null)
     {
-        $this->message->addTo($addresses, $name);
+        $this->deferredCalls[] = function() use ($addresses, $name) {
+            $this->message->addTo($addresses, $name);
+        };
         return $this;
     }
 
@@ -106,7 +119,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($addresses === null) {
             return $this->message->getCc();
         }
-        $this->message->setCc($addresses, $name);
+        $this->deferredCalls[] = function() use ($addresses, $name) {
+            $this->message->setCc($addresses, $name);
+        };
         return $this;
     }
 
@@ -125,7 +140,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function andCc($addresses, $name = null)
     {
-        $this->message->addCc($addresses, $name);
+        $this->deferredCalls[] = function() use ($addresses, $name) {
+            $this->message->addCc($addresses, $name);
+        };
         return $this;
     }
 
@@ -145,7 +162,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($addresses === null) {
             return $this->message->getBcc();
         }
-        $this->message->setBcc($addresses, $name);
+        $this->deferredCalls[] = function() use ($addresses, $name) {
+            $this->message->setBcc($addresses, $name);
+        };
         return $this;
     }
 
@@ -164,7 +183,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function andBcc($addresses, $name = null)
     {
-        $this->message->addBcc($addresses, $name);
+        $this->deferredCalls[] = function() use ($addresses, $name) {
+            $this->message->addBcc($addresses, $name);
+        };
         return $this;
     }
 
@@ -180,7 +201,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($address === null) {
             return $this->message->getReturnPath();
         }
-        $this->message->setReturnPath($address);
+        $this->deferredCalls[] = function() use ($address) {
+            $this->message->setReturnPath($address);
+        };
         return $this;
     }
 
@@ -197,7 +220,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($address === null) {
             return $this->message->getSender();
         }
-        $this->message->setSender($address, $name);
+        $this->deferredCalls[] = function() use ($address, $name) {
+            $this->message->setSender($address, $name);
+        };
         return $this;
     }
 
@@ -217,7 +242,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($template === null) {
             return $this->message->getHtml();
         }
-        $this->message->setHtml($template);
+        $this->deferredCalls[] = function() use ($template) {
+            $this->message->setHtml($template);
+        };
         return $this;
     }
 
@@ -236,7 +263,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($template === null) {
             return $this->message->getText();
         }
-        $this->message->setText($template);
+        $this->deferredCalls[] = function() use ($template) {
+            $this->message->setText($template);
+        };
         return $this;
     }
 
@@ -255,7 +284,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($variables === null) {
             return $this->message->getVariables();
         }
-        $this->message->setVariables($variables);
+        $this->deferredCalls[] = function() use ($variables) {
+            $this->message->setVariables($variables);
+        };
         return $this;
     }
 
@@ -269,7 +300,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function addVariable($name, $value)
     {
-        $this->message->addVariables([$name => $value]);
+        $this->deferredCalls[] = function() use ($name, $value) {
+            $this->message->addVariables([$name => $value]);
+        };
         return $this;
     }
 
@@ -282,7 +315,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function addVariables(array $variables)
     {
-        $this->message->addVariables($variables);
+        $this->deferredCalls[] = function() use ($variables) {
+            $this->message->addVariables($variables);
+        };
         return $this;
     }
 
@@ -301,7 +336,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($extras === null) {
             return $this->message->getExtras();
         }
-        $this->message->setExtras($extras);
+        $this->deferredCalls[] = function() use ($extras) {
+            $this->message->setExtras($extras);
+        };
         return $this;
     }
 
@@ -315,7 +352,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function addExtra($key, $value)
     {
-        $this->message->addExtras([$key => $value]);
+        $this->deferredCalls[] = function() use ($key, $value) {
+            $this->message->addExtras([$key => $value]);
+        };
         return $this;
     }
 
@@ -328,7 +367,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function addExtras(array $extras)
     {
-        $this->message->addVariables($extras);
+        $this->deferredCalls[] = function() use ($extras) {
+            $this->message->addVariables($extras);
+        };
         return $this;
     }
 
@@ -345,7 +386,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function attachByPath($path, $filename = null, $contentType = null, $inline = false)
     {
-        $this->message->addAttachmentByPath($path, $filename, $contentType, $inline);
+        $this->deferredCalls[] = function() use ($data, $filename, $contentType, $inline) {
+            $this->message->addAttachmentByPath($path, $filename, $contentType, $inline);
+        };
         return $this;
     }
 
@@ -362,7 +405,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function attachByData($data, $filename, $contentType = null, $inline = false)
     {
-        $this->message->addAttachmentByData($data, $filename, $contentType, $inline);
+        $this->deferredCalls[] = function() use ($data, $filename, $contentType, $inline) {
+            $this->message->addAttachmentByData($data, $filename, $contentType, $inline);
+        };
         return $this;
     }
 
@@ -378,7 +423,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($priority === null) {
             return $this->message->getSpoolerPriority();
         }
-        $this->message->setSpoolerPriority($priority);
+        $this->deferredCalls[] = function() use ($priority) {
+            $this->message->setSpoolerPriority($priority);
+        };
         return $this;
     }
 
@@ -394,21 +441,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
         if ($priority === null) {
             return $this->message->getPriority();
         }
-        $this->message->setPriority($priority);
-        return $this;
-    }
-
-    /**
-     * Add a custom text header.
-     *
-     * @param string $name
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function addTextHeader(string $name, string $value)
-    {
-        $this->message->addTextHeader($name, $value);
+        $this->deferredCalls[] = function() use($priority) {
+            $this->message->setPriority($priority);
+        };
         return $this;
     }
 
@@ -426,7 +461,9 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function webview($value = null)
     {
-        $this->message->webview($value);
+        $this->deferredCalls[] = function() use ($value) {
+            $this->message->webview($value);
+        };
         return $this;
     }
 
@@ -437,6 +474,19 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function getMessage()
     {
+        foreach ($this->deferredCalls as $call) {
+            try {
+                $call();
+            } catch (\Exception | \Throwable $e) {
+                $extras = ArrayUtils::ensureArray($this->message->getExtras());
+                if (!array_key_exists('builderErrors', $extras)) {
+                    $extras['builderErrors'] = [];
+                }
+                $extras['builderErrors'][] = $e->getMessage();
+                $this->message->setExtras($extras);
+            }
+        }
+        $this->deferredCalls = [];
         return $this->message;
     }
 }

@@ -95,6 +95,7 @@ class MessageTracker
         $this->waitingForPersist = [];
         $this->autoPersistEntitiesIdentifiers = [];
         $this->hasBeenFlushed = false;
+        \register_shutdown_function([$this, 'flush']);
     }
 
     /**
@@ -259,13 +260,15 @@ class MessageTracker
     public function flush()
     {
         try {
-            if (count($this->waitingForPersist) > 0) {
-                foreach ($this->waitingForPersist as $entity) {
+            while (count($this->waitingForPersist) > 0) {
+                $batch = array_splice($this->waitingForPersist, 0, 100);
+                foreach ($batch as $entity) {
                     $this->entityManager->persist($entity);
                 }
-                $this->entityManager->flush($this->waitingForPersist);
-                $this->waitingForPersist = [];
+                $this->entityManager->flush($batch);
+                sleep(1);
             }
+            $this->waitingForPersist = [];
             $this->hasBeenFlushed = true;
         } catch (\Exception | \Throwable $e) {
             $this->errorTracker->track(new RuntimeException(
@@ -319,7 +322,7 @@ class MessageTracker
     private function createTrackedMessageEntity(MessageInterface $message): TrackedMessageEntityInterface
     {
         $event = new MessageTrackerOnCreateMessageEntityEvent($message);
-        $this->dispatcher->dispatch(Events::messageTrackerOnCreateMessageEntity, $event);
+        $this->dispatcher->dispatch($event, Events::messageTrackerOnCreateMessageEntity);
         $entity = $event->getEntity();
         $autoSave = $event->getAutoSave();
         if ($entity === null && $this->messageEntityClass) {
@@ -341,6 +344,7 @@ class MessageTracker
         /** @var TrackedMessageEntityInterface $entity */
         $identifier = $message->getIdentifier();
         $entity->setIdentifier($identifier);
+        $entity->setSubject($message->getSubject());
         $entity->setExtras($message->getExtras());
         if ($autoSave) {
             $this->waitingForPersist[] = $entity;
@@ -371,7 +375,7 @@ class MessageTracker
                                              array $extras): TrackedLinkEntityInterface
     {
         $event = new MessageTrackerOnCreateMessageLinkEvent($identifier, $url, $entity, $message, $extras);
-        $this->dispatcher->dispatch(Events::messageTrackerOnCreateLink, $event);
+        $this->dispatcher->dispatch($event, Events::messageTrackerOnCreateLink);
         $entity = $event->getEntity();
         $autoSave = $event->getAutoSave();
         if ($entity === null && $this->linkEntityClass) {

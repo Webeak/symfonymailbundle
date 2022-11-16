@@ -328,16 +328,6 @@ interface MessageInterface
     public function getVariables();
 
     /**
-     * Add a custom text header.
-     *
-     * @param string $name
-     * @param string $value
-     *
-     * @return mixed
-     */
-    public function addTextHeader(string $name, string $value);
-    
-    /**
      * Set extra private data that will not be part of the email.
      *
      * This methods overrides any other extra set previously.
