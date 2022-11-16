@@ -536,6 +536,19 @@ class SwiftMessage implements MessageInterface, \Serializable
     }
 
     /**
+     * Add a custom text header.
+     *
+     * @param string $name
+     * @param string $value
+     *
+     * @return mixed
+     */
+    public function addTextHeader(string $name, string $value)
+    {
+        $this->instance->getHeaders()->addTextHeader($name, $value);
+    }
+
+    /**
      * Set extra private data that will not be part of the email.
      *
      * This methods overrides any other extra set previously.
