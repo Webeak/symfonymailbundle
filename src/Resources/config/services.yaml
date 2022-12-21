@@ -92,7 +92,6 @@ services:
     Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMessage:
         arguments:
             - '@request_stack'
-            - '@twig'
             - '@Webeak\Bundle\EssentialBundle\UniqueIdGenerator'
         shared: false
         public: true

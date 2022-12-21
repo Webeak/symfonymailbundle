@@ -98,12 +98,11 @@ class Mailer
      *
      * @param MessageInterface|MessageBuilderInterface|MessageInterface[]|MessageBuilderInterface[] $messages
      *
-     * @return $this
+     * @return integer number of messages successfully queued
      */
     public function send($messages)
     {
-        $this->spooler->schedule($this->ensureArrayOfMessages($messages));
-        return $this;
+        return $this->spooler->schedule($this->ensureArrayOfMessages($messages));
     }
 
     /**

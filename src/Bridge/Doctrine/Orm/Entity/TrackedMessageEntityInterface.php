@@ -22,6 +22,42 @@ interface TrackedMessageEntityInterface
     public function setSubject(?string $subject);
 
     /**
+     * Sets the from of the message.
+     *
+     * @param string $from
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setFrom(?array $from);
+
+    /**
+     * Sets the to of the message.
+     *
+     * @param array|null $to
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setTo(?array $to);
+
+    /**
+     * Sets the cc of the message.
+     *
+     * @param array|null $cc
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setCc(?array $cc);
+
+    /**
+     * Sets the bcc of the message.
+     *
+     * @param array|null $bcc
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setBcc(?array $to);
+
+    /**
      * Sets the unique string identifier of the message.
      *
      * @param string $identifier

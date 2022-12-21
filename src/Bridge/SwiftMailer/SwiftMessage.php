@@ -2,7 +2,6 @@
 namespace Webeak\Bundle\MailBundle\Bridge\SwiftMailer;
 
 use Symfony\Component\HttpFoundation\RequestStack;
-use Twig\Environment;
 use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
 use Webeak\Bundle\MailBundle\MessageInterface;
 use Webeak\Component\Utils\ArrayUtils;
@@ -72,16 +71,12 @@ class SwiftMessage implements MessageInterface, \Serializable
     /** @var string */
     private $baseUrl;
 
-    /** @var \Twig_Environment */
-    private $twig;
-
     /** @var array */
     private $attachments;
 
-    public function __construct(RequestStack $requestStack, Environment $twig, UniqueIdGenerator $uniqueIdGenerator)
+    public function __construct(RequestStack $requestStack, UniqueIdGenerator $uniqueIdGenerator)
     {
         $currentRequest = $requestStack->getCurrentRequest();
-        $this->twig = $twig;
         $this->instance = new \Swift_Message();
         $this->identifier = $uniqueIdGenerator->generateId(8);
         $this->html = null;
@@ -429,8 +424,7 @@ class SwiftMessage implements MessageInterface, \Serializable
      */
     public function setHtml($template = null)
     {
-        $source = $this->ensureSourceCode($template);
-        $this->html = $source;
+        $this->html = $template;
         return $this;
     }
 
@@ -470,8 +464,7 @@ class SwiftMessage implements MessageInterface, \Serializable
      */
     public function setText($template = null)
     {
-        $source = $this->ensureSourceCode($template);
-        $this->text = $source;
+        $this->text = $template;
         return $this;
     }
 
@@ -533,19 +526,6 @@ class SwiftMessage implements MessageInterface, \Serializable
     public function getVariables()
     {
         return array_merge(['_baseUrl' => $this->baseUrl], $this->variables);
-    }
-
-    /**
-     * Add a custom text header.
-     *
-     * @param string $name
-     * @param string $value
-     *
-     * @return mixed
-     */
-    public function addTextHeader(string $name, string $value)
-    {
-        $this->instance->getHeaders()->addTextHeader($name, $value);
     }
 
     /**
@@ -718,50 +698,6 @@ class SwiftMessage implements MessageInterface, \Serializable
             $this->instance->setBody($this->text, 'text/plain');
         }
         return $this->instance;
-    }
-
-    /**
-     * Try to ensure the source code of a template is returned no matter
-     * if a template path or a source is given as input.
-     *
-     * @param string $source
-     *
-     * @return string
-     *
-     * @throws
-     */
-    private function ensureSourceCode($source)
-    {
-        if (!is_string($source) || !$source) {
-            return '';
-        }
-        $twigExt = substr($source, -5) === '.twig';
-        if ($twigExt || (strpos($source, "\n") === false && strpos($source, "\n\r") === false)) {
-            try {
-                $template = $this->twig->load($source);
-                $context = $template->getSourceContext();
-                $code = $context->getCode();
-                if (!$code) {
-                    if (($path = $context->getPath())) {
-                        $code = @file_get_contents($path);
-                        if (!$code) {
-                            throw new \RuntimeException(sprintf('Failed to retrieve template code from "%s".', $path));
-                        }
-                    } else {
-                        throw new \InvalidArgumentException(sprintf(
-                            'Failed to retrieve twig template for source "%s". '.
-                            'No code or valid path found.', substr($source, 0, 255)
-                        ));
-                    }
-                }
-                return $code;
-            } catch (\Exception $e) {
-                if ($twigExt) {
-                    throw $e;
-                }
-            }
-        }
-        return $source;
     }
 
     /**

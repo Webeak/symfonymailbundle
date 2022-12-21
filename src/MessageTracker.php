@@ -322,7 +322,7 @@ class MessageTracker
     private function createTrackedMessageEntity(MessageInterface $message): TrackedMessageEntityInterface
     {
         $event = new MessageTrackerOnCreateMessageEntityEvent($message);
-        $this->dispatcher->dispatch($event, Events::messageTrackerOnCreateMessageEntity);
+        $this->dispatcher->dispatch(Events::messageTrackerOnCreateMessageEntity, $event);
         $entity = $event->getEntity();
         $autoSave = $event->getAutoSave();
         if ($entity === null && $this->messageEntityClass) {
@@ -346,6 +346,10 @@ class MessageTracker
         $entity->setIdentifier($identifier);
         $entity->setSubject($message->getSubject());
         $entity->setExtras($message->getExtras());
+        $entity->setFrom($message->getFrom());
+        $entity->setTo($message->getTo());
+        $entity->setCc($message->getCc());
+        $entity->setBcc($message->getBcc());
         if ($autoSave) {
             $this->waitingForPersist[] = $entity;
             if (!in_array($identifier, $this->autoPersistEntitiesIdentifiers)) {
@@ -375,7 +379,7 @@ class MessageTracker
                                              array $extras): TrackedLinkEntityInterface
     {
         $event = new MessageTrackerOnCreateMessageLinkEvent($identifier, $url, $entity, $message, $extras);
-        $this->dispatcher->dispatch($event, Events::messageTrackerOnCreateLink);
+        $this->dispatcher->dispatch(Events::messageTrackerOnCreateLink, $event);
         $entity = $event->getEntity();
         $autoSave = $event->getAutoSave();
         if ($entity === null && $this->linkEntityClass) {

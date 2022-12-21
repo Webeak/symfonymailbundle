@@ -1,11 +1,6 @@
 <?php
 namespace Webeak\Bundle\MailBundle;
 
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\Filesystem\Exception\IOException;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment;
@@ -21,6 +16,11 @@ use Webeak\Bundle\MailBundle\Event\SpoolerOnSendAbandonEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnSendEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnSendFailureEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnSendSuccessEvent;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Finder\Finder;
 use Webeak\Bundle\MailBundle\HeavyTask\FlushSpoolerTask;
 use Webeak\Component\Utils\ArrayUtils;
 
@@ -87,7 +87,7 @@ class Spooler
         $sentSuccessfully = 0;
         for ($i = 0, $ii = count($messages); $i < $ii; ++$i) {
             $this->prepareMessage($messages[$i]);
-            $this->dispatcher->dispatch(new SpoolerOnInstantSendEvent($messages[$i]), Events::spoolerOnInstantSend);
+            $this->dispatcher->dispatch(Events::spoolerOnInstantSend, new SpoolerOnInstantSendEvent($messages[$i]));
             if ($this->sendMessage($messages[$i])) {
                 ++$sentSuccessfully;
             }
@@ -100,6 +100,8 @@ class Spooler
      *
      * @param MessageInterface[] $messages
      *
+     * @return integer number of messages successfully queued
+     *
      * @throws
      */
     public function schedule(array $messages)
@@ -108,6 +110,7 @@ class Spooler
             $this->prepareMessage($messages[$i]);
             $this->scheduleMessage($messages[$i]);
         }
+        return count($messages);
     }
 
     /**
@@ -162,7 +165,7 @@ class Spooler
                         $try = intval(substr($filepath, strrpos($filepath, 'r', 0) + 1));
 
                         if ($output) { $output->write(sprintf('Sending <info>%s</info>..', $identifier)); }
-                        $this->dispatcher->dispatch(new SpoolerOnSendEvent($message), Events::spoolerOnSend);
+                        $this->dispatcher->dispatch(Events::spoolerOnSend, new SpoolerOnSendEvent($message));
                         if (!$this->sendMessage($message)) {
                             if (!$this->scheduleMessage($message, $try) && $output) {
                                 $output->writeLn(sprintf('<error>Failed, abandoning.</error>. Max retry count reached.'));
@@ -181,7 +184,7 @@ class Spooler
                             $batchCount = 0;
                             $batchMessages = [];
                             usleep($this->configuration['send_delay_per_batch'] * 1000);
-                            $this->dispatcher->dispatch(new SpoolerOnBatchEndEvent($batchMessages), Events::spoolerOnBatchEnd);
+                            $this->dispatcher->dispatch(Events::spoolerOnBatchEnd, new SpoolerOnBatchEndEvent($batchMessages));
                         }
                         if ((time() - $time) >= $this->configuration['max_execution_time']) {
                             if ($output) { $output->writeLn('<comment>Ends flushing. Max execution time reached.</comment>'); }
@@ -192,7 +195,7 @@ class Spooler
             }
         }
         if (count($batchMessages) > 0) {
-            $this->dispatcher->dispatch(new SpoolerOnBatchEndEvent($batchMessages), Events::spoolerOnBatchEnd);
+            $this->dispatcher->dispatch(Events::spoolerOnBatchEnd, new SpoolerOnBatchEndEvent($batchMessages));
         }
         if ($output) { $output->writeLn('<comment>Ends flushing. No more messages.</comment>'); }
         // We may have some time to loose, let's check if there is emails still 'sending' for a long time
@@ -235,12 +238,12 @@ class Spooler
                     $try = intval(substr($newName, strrpos($newName, 'r', 0) + 1));
                     if ($message instanceof MessageInterface && $try < $this->configuration['max_retry_count']) {
                         ++$try;
-                        $this->dispatcher->dispatch(new SpoolerOnRetryEvent(
+                        $this->dispatcher->dispatch(Events::spoolerOnRetry, new SpoolerOnRetryEvent(
                             $message,
                             $identifier,
                             $try,
                             $this->configuration['max_retry_count'] - $try
-                        ), Events::spoolerOnRetry);
+                        ));
                         $newName = substr($newName, 0, strrpos($newName, 'r', 0) + 1).$try;
                         @rename($fullpath, $path.'/'.$newName);
                         if ($output) { $output->writeLn(sprintf('<info>%s</info> requeued.', $identifier)); }
@@ -252,7 +255,7 @@ class Spooler
                             $errorMessage = 'Maximum number of tries reached in recover.';
                         }
                         if ($output) { $output->writeLn(sprintf('<error>Abandoning</error> <info>%s</info>. %s', $identifier, $errorMessage)); }
-                        $this->dispatcher->dispatch(new SpoolerOnSendAbandonEvent($message, $errorMessage), Events::spoolerOnSendAbandon);
+                        $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $errorMessage));
                     }
                 }
             }
@@ -321,18 +324,18 @@ class Spooler
             }
             $finalMessage = $message->getInstance();
             if ($this->mailer->send($finalMessage) > 0) { // TODO: use the second parameter of the send() method to handle partial success.
-                $this->dispatcher->dispatch(new SpoolerOnSendSuccessEvent($message), Events::spoolerOnSendSuccess);
+                $this->dispatcher->dispatch(Events::spoolerOnSendSuccess, new SpoolerOnSendSuccessEvent($message));
                 if ($message->webview()) {
-                    $this->dispatcher->dispatch(new SpoolerOnCreateWebViewsEvent($message), Events::spoolerOnCreateWebViews);
+                    $this->dispatcher->dispatch(Events::spoolerOnCreateWebViews, new SpoolerOnCreateWebViewsEvent($message));
                     $this->createWebView($message);
                 }
                 return true;
             } else {
-                $this->dispatcher->dispatch(new SpoolerOnSendFailureEvent($message, 'Mailer failed to send with no exception.'), Events::spoolerOnSendFailure);
+                $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, 'Mailer failed to send with no exception.'));
             }
         } catch (\Exception $e) {
             StaticLogger::critical(sprintf('Failed to send email: %s.', $e->getMessage()), ['message' => $message, 'exception' => $e]);
-            $this->dispatcher->dispatch(new SpoolerOnSendFailureEvent($message, $e->getMessage()), Events::spoolerOnSendFailure);
+            $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
         }
         return false;
     }
@@ -349,7 +352,7 @@ class Spooler
     {
         if ($try >= $this->configuration['max_retry_count']) {
             $reason = sprintf('Max send retry count of "%d" reached.', $this->configuration['max_retry_count']);
-            $this->dispatcher->dispatch(new SpoolerOnSendAbandonEvent($message, $reason), Events::spoolerOnSendAbandon);
+            $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $reason));
             return false;
         }
         try {
@@ -367,16 +370,16 @@ class Spooler
             }
             $path = $this->configuration['save_path'] . '/queues/' . $priority . '/' . $message->getIdentifier() . '.message.r' . ($try + 1);
             if (@file_put_contents($path, $serialized) !== false) {
-                $this->dispatcher->dispatch(new SpoolerOnQueueEvent($message), Events::spoolerOnQueue);
+                $this->dispatcher->dispatch(Events::spoolerOnQueue, new SpoolerOnQueueEvent($message));
             } else {
                 $reason = sprintf('Failed to write "%s".', $path);
-                $this->dispatcher->dispatch(new SpoolerOnSendFailureEvent($message, $reason), Events::spoolerOnSendFailure);
-                $this->dispatcher->dispatch(new SpoolerOnSendAbandonEvent($message, $reason), Events::spoolerOnSendAbandon);
+                $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $reason));
+                $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $reason));
                 throw new \RuntimeException($reason);
             }
         } catch (\Exception | \Throwable $e) {
             StaticLogger::critical(sprintf('Failed to schedule message: %s', $e->getMessage()), ['message' => $message, 'exception' => $e]);
-            $this->dispatcher->dispatch(new SpoolerOnSendFailureEvent($message, $e->getMessage()), Events::spoolerOnSendFailure);
+            $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
         }
         $this->heavyTaskManager->start(FlushSpoolerTask::class, ['unique' => true]);
         return true;
@@ -440,11 +443,20 @@ class Spooler
     {
         $variables = $message->getVariables();
         $source = $type === 'html' ? $message->getHtml() : $message->getText();
-        $template = $this->twig->createTemplate($source);
-        ob_start();
-        $result = $template->render($variables);
-        ob_end_clean();
-        return $result;
+        if (!is_string($source) || !$source) {
+            throw new \InvalidArgumentException(sprintf('Message has no %s content.', $type));
+        }
+        $twigExt = substr($source, -5) === '.twig';
+        if ($twigExt || (strpos($source, "\n") === false && strpos($source, "\n\r") === false)) {
+            try {
+                return $this->twig->render($source, $variables);
+            } catch (\Exception $e) {
+                if ($twigExt) {
+                    throw $e;
+                }
+            }
+        }
+        return $source;
     }
 
     /**
@@ -476,5 +488,48 @@ class Spooler
                     $this->router->generate('wb_mail_webview', ['identifier' => $message->getIdentifier()], RouterInterface::ABSOLUTE_URL)
             ]);
         }
+    }
+
+    /**
+     * Try to ensure the source code of a template is returned no matter
+     * if a template path or a source is given as input.
+     *
+     * @param string $source
+     *
+     * @return string
+     *
+     * @throws
+     */
+    private function ensureSourceCode($source)
+    {
+        if (!is_string($source) || !$source) {
+            return '';
+        }
+        $twigExt = substr($source, -5) === '.twig';
+        if ($twigExt || (strpos($source, "\n") === false && strpos($source, "\n\r") === false)) {
+            try {
+                $context = $this->twigFileSystem->getSourceContext($source);
+                $code = $context->getCode();
+                if (!$code) {
+                    if (($path = $context->getPath())) {
+                        $code = @file_get_contents($path);
+                        if (!$code) {
+                            throw new \RuntimeException(sprintf('Failed to retrieve template code from "%s".', $path));
+                        }
+                    } else {
+                        throw new \InvalidArgumentException(sprintf(
+                            'Failed to retrieve twig template for source "%s". '.
+                            'No code or valid path found.', substr($source, 0, 255)
+                        ));
+                    }
+                }
+                return $code;
+            } catch (\Exception $e) {
+                if ($twigExt) {
+                    throw $e;
+                }
+            }
+        }
+        return $source;
     }
 }

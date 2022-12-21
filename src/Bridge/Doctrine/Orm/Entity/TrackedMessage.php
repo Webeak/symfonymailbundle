@@ -23,6 +23,26 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
     protected $subject;
 
     /**
+     * @ORM\Column(name="_from", type="json", nullable=true)
+     */
+    protected $from;
+
+    /**
+     * @ORM\Column(name="_to", type="json", nullable=true)
+     */
+    protected $to;
+
+    /**
+     * @ORM\Column(type="json", nullable=true)
+     */
+    protected $cc;
+
+    /**
+     * @ORM\Column(type="json", nullable=true)
+     */
+    protected $bcc;
+
+    /**
      * @ORM\Column(type="boolean")
      */
     protected $sent;
@@ -136,6 +156,98 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
     public function setSubject(?string $subject)
     {
         $this->subject = $subject;
+        return $this;
+    }
+
+    /**
+     * Gets the from of the message.
+     *
+     * @return array|null
+     */
+    public function getFrom()
+    {
+        return $this->from;
+    }
+
+    /**
+     * Sets the from of the message.
+     *
+     * @param array|null $from
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setFrom(?array $from)
+    {
+        $this->from = $from;
+        return $this;
+    }
+
+    /**
+     * Gets the to of the message.
+     *
+     * @return array|null
+     */
+    public function getTo()
+    {
+        return ArrayUtils::ensureArray($this->to);
+    }
+
+    /**
+     * Sets the to of the message.
+     *
+     * @param array|null $to
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setTo(?array $to)
+    {
+        $this->to = $to;
+        return $this;
+    }
+
+    /**
+     * Gets the cc of the message.
+     *
+     * @return array|null
+     */
+    public function getCc()
+    {
+        return ArrayUtils::ensureArray($this->cc);
+    }
+
+    /**
+     * Sets the cc of the message.
+     *
+     * @param array|null $cc
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setCc(?array $cc)
+    {
+        $this->cc = $cc;
+        return $this;
+    }
+
+    /**
+     * Gets the bcc of the message.
+     *
+     * @return array|null
+     */
+    public function getBcc()
+    {
+        return ArrayUtils::ensureArray($this->bcc);
+    }
+
+    /**
+     * Sets the to of the message.
+     *
+     * @param array|null $bcc
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setBcc(?array $bcc)
+    {
+        $this->bcc = $bcc;
         return $this;
     }
 

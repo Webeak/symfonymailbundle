@@ -91,6 +91,8 @@ class MessageTrackerListener
         if ($entity !== null) {
             $reasons = $entity->getFailureReasons();
             $reasons[] = $event->getReason();
+            $entity->setFailed(true);
+            $entity->setSent(false);
             $entity->setFailureReasons($reasons);
             $this->tracker->persist($entity);
         }
