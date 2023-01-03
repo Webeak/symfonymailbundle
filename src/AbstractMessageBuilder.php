@@ -386,7 +386,7 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
      */
     public function attachByPath($path, $filename = null, $contentType = null, $inline = false)
     {
-        $this->deferredCalls[] = function() use ($data, $filename, $contentType, $inline) {
+        $this->deferredCalls[] = function() use ($path, $filename, $contentType, $inline) {
             $this->message->addAttachmentByPath($path, $filename, $contentType, $inline);
         };
         return $this;
