@@ -58,6 +58,11 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
     protected $failed;
 
     /**
+     * @ORM\Column(type="boolean")
+     */
+    protected $resent;
+
+    /**
      * @ORM\Column(type="json", nullable=true)
      */
     protected $failureReasons;
@@ -103,6 +108,7 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
         $this->sent = false;
         $this->queued = false;
         $this->failed = false;
+        $this->resent = false;
         $this->failureReasons = null;
         $this->abandonReason = null;
         $this->sendTryCount = 0;
@@ -318,6 +324,29 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
     public function getFailed(): bool
     {
         return $this->failed;
+    }
+
+    /**
+     * Set if the message has been resent via another message.
+     *
+     * @param boolean $resent
+     *
+     * @return TrackedMessageEntityInterface
+     */
+    public function setResent(bool $resent)
+    {
+        $this->resent = $resent;
+        return $this;
+    }
+
+    /**
+     * Get if the message has been resent via another message.
+     *
+     * @return boolean
+     */
+    public function getResent(): bool
+    {
+        return $this->resent;
     }
 
     /**

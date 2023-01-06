@@ -122,6 +122,7 @@ class Spooler
      */
     public function flush($priority = null, OutputInterface $output = null)
     {
+        //StaticLogger::autoPersist(true);
         $this->setTimeLimit();
         $batchCount = 0;
         $batchMessages = [];
@@ -140,6 +141,7 @@ class Spooler
                 if ($output) { $output->writeLn(sprintf('Searching for priority <comment>%s</comment> and retry <info>%d</info>..', $currentPriority, $i)); }
                 foreach ($finder->in($path) as $file) {
                     try {
+                        //StaticLogger::debug(sprintf('Found mail file "%s".', $file->getRealPath()));
                         /** @var File $file */
                         $filepath = $file->getRealPath();
                         $filename = $file->getFilename();
@@ -150,14 +152,18 @@ class Spooler
                             continue;
                         }
                     } catch (\Exception $e) {
+                        //StaticLogger::error($e->getMessage(), ['exception' => $e]);
                         // The getMTime() may fail as we have still not renamed the file.
                         // If it fails, another process may have renamed it at the same time, simply ignore it.
                         continue ;
                     }
+                    //StaticLogger::debug(sprintf('Rename "%s" into "%s".', $filepath, $newpath));
                     if (@rename($filepath, $newpath) !== false) {
                         /** @var MessageInterface $message */
                         $message = @unserialize(file_get_contents($newpath));
+                        //StaticLogger::info(sprintf('Unserialize message at "%s".', $newpath), ['message' => $message]);
                         if ($message === false) {
+                            //StaticLogger::debug(sprintf('Unlink "%s".', $newpath));
                             @unlink($newpath);
                             continue ;
                         }
@@ -166,15 +172,19 @@ class Spooler
 
                         if ($output) { $output->write(sprintf('Sending <info>%s</info>..', $identifier)); }
                         $this->dispatcher->dispatch(Events::spoolerOnSend, new SpoolerOnSendEvent($message));
+                        //StaticLogger::info('Sending message.');
                         if (!$this->sendMessage($message)) {
+                            //StaticLogger::warning('sendMessage failed.');
                             if (!$this->scheduleMessage($message, $try) && $output) {
                                 $output->writeLn(sprintf('<error>Failed, abandoning.</error>. Max retry count reached.'));
                             } else if ($output) {
                                 $output->writeLn('<error>Failed.</error>');
                             }
                         } else {
+                            //StaticLogger::notice('sendMessage succeedded.');
                             if ($output) { $output->writeLn('<info>Success.</info>'); }
                         }
+                        //StaticLogger::debug(sprintf('Unlink "%s".', $newpath));
                         @unlink($newpath);
                         ++$batchCount;
                         $batchMessages[] = $message;
@@ -190,6 +200,8 @@ class Spooler
                             if ($output) { $output->writeLn('<comment>Ends flushing. Max execution time reached.</comment>'); }
                             return ;
                         }
+                    } else {
+                        //StaticLogger::error('Rename failed.');
                     }
                 }
             }

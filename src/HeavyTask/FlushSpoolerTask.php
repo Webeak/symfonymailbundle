@@ -49,12 +49,14 @@ class FlushSpoolerTask extends AbstractHeavyTask
      */
     public function execute(HeavyTaskContext $context)
     {
-        $i = 0;
+        $totalUpTime = 0;
+        $maxUpTime = 60; // 1 minute
         do {
             $this->spooler->flush();
             $this->messageTracker->flush();
-            $context->setProgress('Last flush: ' . date('H:i:s'));
+            $context->setProgress('Last flush: ' . date('H:i:s') . '. Time left: ' . ($maxUpTime - $totalUpTime) . ' seconds');
             sleep(5);
-        } while ($i < 120); // ~10 minutes
+            $totalUpTime += 5;
+        } while ($totalUpTime < $maxUpTime);
     }
 }
