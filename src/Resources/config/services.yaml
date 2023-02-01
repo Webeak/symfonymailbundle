@@ -32,7 +32,7 @@ services:
             - '@twig'
             - '@router'
             - '@Webeak\Bundle\MailBundle\MailerInterface'
-            - '@Webeak\Bundle\EssentialBundle\UniqueIdGenerator'
+            - '@Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator'
             - '@Webeak\Bundle\HeavyTaskBundle\HeavyTaskManager'
             - '%wb.mail.spooler%'
 
@@ -54,7 +54,7 @@ services:
         arguments:
             - '@router.default'
             - '@doctrine.orm.entity_manager'
-            - '@Webeak\Bundle\EssentialBundle\UniqueIdGenerator'
+            - '@Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator'
             - '@Webeak\Bundle\ErrorTrackerBundle\ErrorTrackerInterface'
             - '%wb.mail.tracker%'
 
@@ -92,7 +92,7 @@ services:
     Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMessage:
         arguments:
             - '@request_stack'
-            - '@Webeak\Bundle\EssentialBundle\UniqueIdGenerator'
+            - '@Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator'
         shared: false
         public: true
 

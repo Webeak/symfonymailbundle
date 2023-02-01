@@ -6,7 +6,7 @@ use Webeak\Bundle\ErrorTrackerBundle\ErrorTrackerInterface;
 use Webeak\Bundle\EssentialBundle\Exception\InvalidArgumentException;
 use Webeak\Bundle\EssentialBundle\Exception\InvalidConfigurationException;
 use Webeak\Bundle\EssentialBundle\Exception\RuntimeException;
-use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
+use Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator;
 use Webeak\Bundle\MailBundle\Bridge\Doctrine\Orm\Entity\TrackedLinkEntityInterface;
 use Webeak\Bundle\MailBundle\Bridge\Doctrine\Orm\Entity\TrackedMessageEntityInterface;
 use Webeak\Bundle\MailBundle\Event\MessageTrackerOnCreateMessageEntityEvent;

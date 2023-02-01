@@ -5,7 +5,7 @@ use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment;
 use Webeak\Bundle\EssentialBundle\StaticLogger;
-use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
+use Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator;
 use Webeak\Bundle\HeavyTaskBundle\HeavyTaskManager;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnBatchEndEvent;
 use Webeak\Bundle\MailBundle\Event\SpoolerOnCreateWebViewsEvent;

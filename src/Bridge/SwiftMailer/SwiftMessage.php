@@ -2,7 +2,7 @@
 namespace Webeak\Bundle\MailBundle\Bridge\SwiftMailer;
 
 use Symfony\Component\HttpFoundation\RequestStack;
-use Webeak\Bundle\EssentialBundle\UniqueIdGenerator;
+use Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator;
 use Webeak\Bundle\MailBundle\MessageInterface;
 use Webeak\Component\Utils\ArrayUtils;
 
@@ -78,7 +78,7 @@ class SwiftMessage implements MessageInterface, \Serializable
     {
         $currentRequest = $requestStack->getCurrentRequest();
         $this->instance = new \Swift_Message();
-        $this->identifier = $uniqueIdGenerator->generateId(8);
+        $this->identifier = $uniqueIdGenerator->generateId(16);
         $this->html = null;
         $this->text = null;
         $this->hasWebview = false;

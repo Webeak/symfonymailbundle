@@ -13,7 +13,7 @@ use Webeak\Component\Utils\ArrayUtils;
 class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntityInterface
 {
     /**
-     * @ORM\Column(type="string", length=10, unique=true, nullable=false, options={"collation":"utf8_bin"})
+     * @ORM\Column(type="string", length=16, unique=true, nullable=false, options={"collation":"utf8_bin"})
      */
     protected $identifier;
 
