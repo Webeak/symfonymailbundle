@@ -102,6 +102,11 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
      */
     protected $trackedLinks;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    protected $creationDate;
+
     public function __construct()
     {
         $this->subject = '';
@@ -117,6 +122,7 @@ class TrackedMessage extends AbstractBasicEntity implements TrackedMessageEntity
         $this->sendDate = null;
         $this->extras = [];
         $this->trackedLinks = new ArrayCollection();
+        $this->creationDate = new \DateTime();
     }
 
     /**
