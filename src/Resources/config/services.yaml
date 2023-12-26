@@ -1,123 +1,33 @@
 services:
-    #
-    # Defines controllers as services and set autowire and autoconfigure because they are at false by default.
-    #
-    Webeak\Bundle\MailBundle\Controller\:
+    _defaults:
         autowire: true
         autoconfigure: true
-        resource: '../../Controller'
-        tags: ['controller.service_arguments']
 
     #
-    # Declare commands.
+    # Transports
     #
-    Webeak\Bundle\MailBundle\Command\:
-        autowire: true
-        autoconfigure: true
-        resource: '../../Command'
-        tags: ['console.command']
+    Webeak\Bundle\MailBundle\Transport\TipimailTransportFactory:
+        tags: ['mailer.transport_factory']
 
-    #
-    # Main services
-    #
-    Webeak\Bundle\MailBundle\Mailer:
-        arguments:
-            - '@router.default'
-            - '@Webeak\Bundle\MailBundle\MessageBuilderFactory'
-            - '@Webeak\Bundle\MailBundle\MessageTracker'
-            - '@Webeak\Bundle\MailBundle\Spooler'
+#    Webeak\Bundle\MailBundle\Transport\TrackedTransportDecorator:
+#        public: false
+#        decorates: 'mailer.transport'
+#        arguments:
+#            - '@logger'
+#            - '@.inner'
+#            - '@doctrine.orm.entity_manager'
 
-    Webeak\Bundle\MailBundle\Spooler:
-        arguments:
-            - '@twig'
-            - '@router'
-            - '@Webeak\Bundle\MailBundle\MailerInterface'
-            - '@Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator'
-            - '@Webeak\Bundle\HeavyTaskBundle\HeavyTaskManager'
-            - '%wb.mail.spooler%'
-
-    Webeak\Bundle\MailBundle\MessageBuilderFactory:
-        arguments: ['@service_container']
-
-    # Override these in your app's services.yaml if you want to use your own builder, mailer, message.
-    Webeak\Bundle\MailBundle\MailerInterface: '@Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMailer'
-
-    Webeak\Bundle\MailBundle\MessageBuilderInterface:
-        alias: 'Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMessageBuilder'
-        public: true
-
-    Webeak\Bundle\MailBundle\MessageInterface:
-        alias: 'Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMessage'
-        public: true
-
-    Webeak\Bundle\MailBundle\MessageTracker:
-        arguments:
-            - '@router.default'
-            - '@doctrine.orm.entity_manager'
-            - '@Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator'
-            - '@Webeak\Bundle\ErrorTrackerBundle\ErrorTrackerInterface'
-            - '%wb.mail.tracker%'
-
-    #
-    # Event listeners
-    #
-    Webeak\Bundle\MailBundle\EventListener\ErrorTrackerListener:
-        arguments:
-            - '@Webeak\Bundle\ErrorTrackerBundle\ErrorTrackerInterface'
-        tags:
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:send-failure', method: onSendFailure }
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:send-abandon', method: onSendAbandon }
-
-    Webeak\Bundle\MailBundle\EventListener\MessageTrackerListener:
-        arguments:
-            - '@Webeak\Bundle\MailBundle\MessageTracker'
-        tags:
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:queue', method: onQueue }
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:send-instant', method: onInstantSend }
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:send', method: onSend }
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:send-success', method: onSendSuccess }
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:send-failure', method: onSendFailure }
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:send-abandon', method: onSendAbandon }
-            - { name: 'wb.mail.spooler_event_listener', event: 'spooler:batch-end', method: onBatchEnd }
-            - { name: 'kernel.event_listener', event: 'kernel.terminate', method: onKernelTerminate, priority: 0 }
-
-    #
-    # SwiftMailer implementations
-    #
-    Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMessageBuilder:
-        arguments: ['@Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMessage']
-        shared: false
-        public: true
-
-    Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMessage:
-        arguments:
-            - '@request_stack'
-            - '@Webeak\Bundle\DoctrineExtensionsBundle\Utils\UniqueIdGenerator'
-        shared: false
-        public: true
-
-    Webeak\Bundle\MailBundle\Bridge\SwiftMailer\SwiftMailer:
-        arguments:
-            - '@swiftmailer.mailer.default'
-            - '@swiftmailer.transport.real'
-
-    #
-    # Commands
-    #
-    Webeak\Bundle\MailBundle\Command\FlushSpoolerMailingCommand:
-        arguments:
-            - '@Webeak\Bundle\MailBundle\Spooler'
-        tags:
-            - { name: 'console.command', command: 'wb:mail:flush-spooler' }
-
-    #
-    # Heavy tasks
-    #
-    Webeak\Bundle\MailBundle\HeavyTask\FlushSpoolerTask:
-        parent: Webeak\Bundle\HeavyTaskBundle\AbstractHeavyTask
-        arguments:
-            - '@Webeak\Bundle\MailBundle\Spooler'
-            - '@Webeak\Bundle\MailBundle\MessageTracker'
-        autowire: false
+    Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator:
         autoconfigure: false
-        public: true
+        decorates: 'Webeak\Bundle\MailBundle\Transport\TipimailTransportFactory'
+        arguments:
+            - '@.inner'
+            - '@logger'
+            - '@doctrine.orm.wb_entity_manager'
+
+    #
+    # Event subscribers
+    #
+    Webeak\Bundle\MailBundle\EventSubscriber\:
+        resource: '../../EventSubscriber'
+        tags: [ { name: kernel.event_subscriber } ]

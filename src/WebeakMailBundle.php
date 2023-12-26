@@ -1,28 +1,16 @@
 <?php
 namespace Webeak\Bundle\MailBundle;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
-use Webeak\Bundle\MailBundle\DependencyInjection\Compiler\RegisterSpoolerListenersPass;
-use Webeak\Bundle\MailBundle\DependencyInjection\Compiler\RegisterTrackerListenersPass;
 use Webeak\Bundle\MailBundle\DependencyInjection\WebeakMailExtension;
 
 class WebeakMailBundle extends Bundle
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function build(ContainerBuilder $container)
-    {
-        parent::build($container);
-        $container->addCompilerPass(new RegisterSpoolerListenersPass());
-        $container->addCompilerPass(new RegisterTrackerListenersPass());
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getContainerExtension()
+    public function getContainerExtension(): ?ExtensionInterface
     {
         return new WebeakMailExtension();
     }
