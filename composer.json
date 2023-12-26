@@ -13,8 +13,6 @@
     ],
     "require": {
         "php": "^8.1",
-        "psr/cache": "~1.0",
-        "symfony/cache": "^6.3",
         "symfony/framework-bundle": "^6.3",
         "webeak/essential-bundle": "^2.0",
         "webeak/doctrine-extensions-bundle": "^2.0"
