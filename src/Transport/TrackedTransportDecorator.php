@@ -1,6 +1,7 @@
 <?php
 namespace Webeak\Bundle\MailBundle\Transport;
 
+use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Email;
@@ -13,9 +14,9 @@ use Webeak\Component\Utils\RandomGenerator;
 
 class TrackedTransportDecorator implements TransportInterface
 {
-    public function __construct(private readonly TransportInterface $decoratedTransport,
-                                private readonly LoggerInterface $logger,
-                                private readonly EntityManagerInterface $entityManager)
+    public function __construct(protected readonly TransportInterface $decoratedTransport,
+                                protected readonly LoggerInterface $logger,
+                                protected readonly ManagerRegistry $doctrine)
     {
 
     }
@@ -39,21 +40,22 @@ class TrackedTransportDecorator implements TransportInterface
         }
     }
 
-    private function updateLog(RawMessage $message, callable $callback)
+    protected function updateLog(RawMessage $message, callable $callback)
     {
         $log = $this->findEmailLog($message);
         if ($log !== null) {
             try {
                 $callback($log);
-                $this->entityManager->persist($log);
-                $this->entityManager->flush();
+                $em = $this->getEntityManager();
+                $em->persist($log);
+                $em->flush();
             } catch (\Throwable $e) {
                 $this->logger->warning(sprintf('Failed to update MailLog: %s', $e->getMessage()), ['exception' => $e]);
             }
         }
     }
 
-    private function createEmailLog(RawMessage $email): ?MailLog
+    protected function createEmailLog(RawMessage $email): ?MailLog
     {
         try {
             if (!($email instanceof Email)) {
@@ -73,8 +75,9 @@ class TrackedTransportDecorator implements TransportInterface
                 $log->setTryCount($log->getTryCount() + 1);
             }
             $log->setQueued(true);
-            $this->entityManager->persist($log);
-            $this->entityManager->flush();
+            $em = $this->getEntityManager();
+            $em->persist($log);
+            $em->flush();
             $this->knownLogs[$log->getRef()] = $log;
             return $log;
         } catch (\Throwable $e) {
@@ -82,8 +85,8 @@ class TrackedTransportDecorator implements TransportInterface
         }
         return null;
     }
-
-    private function recipientsToString(Email $email): string
+    
+    protected function recipientsToString(Email $email): string
     {
         $output = [];
         $allRecipients = array_merge(
@@ -100,21 +103,26 @@ class TrackedTransportDecorator implements TransportInterface
         return implode(', ', $output);
     }
 
-    private function findEmailLog(RawMessage $message): ?MailLog
+    protected function findEmailLog(RawMessage $message): ?MailLog
     {
         $trackedRef = $this->getEmailTrackedRef($message);
         if (!$trackedRef) {
             return null;
         }
-        return $this->entityManager->getRepository(MailLog::class)->findOneBy(['ref' => $trackedRef]);
+        return $this->getEntityManager()->getRepository(MailLog::class)->findOneBy(['ref' => $trackedRef]);
     }
 
-    private function getEmailTrackedRef(RawMessage $message): ?string
+    protected function getEmailTrackedRef(RawMessage $message): ?string
     {
         if (!($message instanceof Email) || !($trackedRefHeader = $message->getHeaders()->get('x-tracked-ref'))) {
             return null;
         }
         return $trackedRefHeader->getBodyAsString();
+    }
+
+    private function getEntityManager(): EntityManagerInterface
+    {
+        return $this->doctrine->getManager('wb');
     }
 
     public function __toString(): string

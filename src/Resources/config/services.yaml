@@ -9,21 +9,30 @@ services:
     Webeak\Bundle\MailBundle\Transport\TipimailTransportFactory:
         tags: ['mailer.transport_factory']
 
-#    Webeak\Bundle\MailBundle\Transport\TrackedTransportDecorator:
-#        public: false
-#        decorates: 'mailer.transport'
-#        arguments:
-#            - '@logger'
-#            - '@.inner'
-#            - '@doctrine.orm.entity_manager'
-
-    Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator:
+    #
+    # Decorators
+    #
+    Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator.base:
+        class: Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator
         autoconfigure: false
+        arguments:
+            - '@logger'
+            - '@doctrine'
+
+    # Decorator for Tipimail
+    Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator.tipimail:
+        parent: Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator.base
         decorates: 'Webeak\Bundle\MailBundle\Transport\TipimailTransportFactory'
         arguments:
             - '@.inner'
-            - '@logger'
-            - '@doctrine.orm.wb_entity_manager'
+
+    # Decorator for the default SMTP transport
+    Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator.smtp:
+        parent: Webeak\Bundle\MailBundle\Transport\TrackedTransportFactoryDecorator.base
+        decorates: 'mailer.transport_factory.smtp'
+        arguments:
+            - '@.inner'
+        tags: ['mailer.transport_factory']
 
     #
     # Event subscribers
