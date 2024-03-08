@@ -270,6 +270,17 @@ abstract class AbstractMessageBuilder implements MessageBuilderInterface
     }
 
     /**
+     * Add a new basic text header with $name and $value.
+     */
+    public function addTextHeader(string $name, ?string $value = null)
+    {
+        $this->deferredCalls[] = function() use ($name, $value) {
+            $this->message->addTextHeader($name, $value);
+        };
+        return $this;
+    }
+
+    /**
      * Get/Set variables accessible from the templates.
      *
      * This methods overrides any other variables set previously.

@@ -136,6 +136,11 @@ interface MessageBuilderInterface
     public function text($template = null);
 
     /**
+     * Add a new basic text header with $name and $value.
+     */
+    public function addTextHeader(string $name, ?string $value = null);
+
+    /**
      * Get/Set the priority header of the message.
      *
      * @param string $priority

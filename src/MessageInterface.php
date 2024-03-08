@@ -300,6 +300,11 @@ interface MessageInterface
     public function hasTextContent();
 
     /**
+     * Add a new basic text header with $name and $value.
+     */
+    public function addTextHeader(string $name, ?string $value = null);
+
+    /**
      * Set variables accessible from the templates.
      *
      * This methods overrides any other variables set previously.

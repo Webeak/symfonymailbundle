@@ -345,7 +345,7 @@ class Spooler
             } else {
                 $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, 'Mailer failed to send with no exception.'));
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             StaticLogger::critical(sprintf('Failed to send email: %s.', $e->getMessage()), ['message' => $message, 'exception' => $e]);
             $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
         }

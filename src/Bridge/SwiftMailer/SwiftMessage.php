@@ -446,7 +446,7 @@ class SwiftMessage implements MessageInterface, \Serializable
      */
     public function hasHtmlContent()
     {
-        return $this->html !== null;
+        return strlen((string)$this->html) > 0;
     }
 
     /**
@@ -486,7 +486,16 @@ class SwiftMessage implements MessageInterface, \Serializable
      */
     public function hasTextContent()
     {
-        return $this->text !== null;
+        return strlen((string)$this->text) > 0;
+    }
+
+    /**
+     * Add a new basic text header with $name and $value.
+     */
+    public function addTextHeader(string $name, ?string $value = null)
+    {
+        $this->instance->getHeaders()->addTextHeader($name, $value);
+        return $this;
     }
 
     /**
