@@ -8,7 +8,7 @@ use Webeak\Bundle\EssentialBundle\Entity\AbstractEntity;
 #[ORM\Table(name: 'wb_mail_log')]
 class MailLog extends AbstractEntity
 {
-    #[ORM\Column(type: "string", length: 45, unique: true, nullable: false, options: ["collation" => "utf8_bin"])]
+    #[ORM\Column(type: "string", length: 45, unique: true, nullable: false, options: ["collation" => "utf8mb4_bin"])]
     protected $ref;
 
     #[ORM\Column(type: 'text')]
