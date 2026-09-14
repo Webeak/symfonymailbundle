@@ -30,7 +30,10 @@ class MessageTrackerListener
         $entity = $this->tracker->getTrackedMessageEntity($event->getMessage());
         if ($entity !== null) {
             $entity->setQueued(true);
-            $this->tracker->persist($entity);
+            // Queue publication cannot rely on the caller or shutdown to save
+            // this entity: another process may consume the file immediately.
+            $this->tracker->persist($entity, true);
+            $this->tracker->flush(true);
         }
     }
 

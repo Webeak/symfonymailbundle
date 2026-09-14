@@ -106,11 +106,14 @@ class Spooler
      */
     public function schedule(array $messages)
     {
+        $queuedCount = 0;
         for ($i = 0, $ii = count($messages); $i < $ii; ++$i) {
             $this->prepareMessage($messages[$i]);
-            $this->scheduleMessage($messages[$i]);
+            if ($this->scheduleMessage($messages[$i])) {
+                ++$queuedCount;
+            }
         }
-        return count($messages);
+        return $queuedCount;
     }
 
     /**
@@ -367,6 +370,7 @@ class Spooler
             $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $reason));
             return false;
         }
+        $temporaryPath = null;
         try {
             $serialized = serialize($message);
             $priority = $message->getSpoolerPriority();
@@ -381,17 +385,26 @@ class Spooler
                 ));
             }
             $path = $this->configuration['save_path'] . '/queues/' . $priority . '/' . $message->getIdentifier() . '.message.r' . ($try + 1);
-            if (@file_put_contents($path, $serialized) !== false) {
-                $this->dispatcher->dispatch(Events::spoolerOnQueue, new SpoolerOnQueueEvent($message));
-            } else {
-                $reason = sprintf('Failed to write "%s".', $path);
-                $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $reason));
-                $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $reason));
-                throw new \RuntimeException($reason);
+            // The consumer only picks *.rN files. Keep the complete message hidden
+            // until the queue listeners have committed its tracking state.
+            $temporaryPath = $path . '.' . bin2hex(random_bytes(8)) . '.tmp';
+            if (@file_put_contents($temporaryPath, $serialized) !== strlen($serialized)) {
+                throw new \RuntimeException(sprintf('Failed to write "%s".', $temporaryPath));
             }
+            $this->dispatcher->dispatch(Events::spoolerOnQueue, new SpoolerOnQueueEvent($message));
+            // Both paths are in the same directory, so publication is atomic.
+            if (!@rename($temporaryPath, $path)) {
+                throw new \RuntimeException(sprintf('Failed to publish "%s".', $path));
+            }
+            $temporaryPath = null;
         } catch (\Exception | \Throwable $e) {
+            if ($temporaryPath !== null) {
+                @unlink($temporaryPath);
+            }
             StaticLogger::critical(sprintf('Failed to schedule message: %s', $e->getMessage()), ['message' => $message, 'exception' => $e]);
             $this->dispatcher->dispatch(Events::spoolerOnSendFailure, new SpoolerOnSendFailureEvent($message, $e->getMessage()));
+            $this->dispatcher->dispatch(Events::spoolerOnSendAbandon, new SpoolerOnSendAbandonEvent($message, $e->getMessage()));
+            return false;
         }
         $this->heavyTaskManager->start(FlushSpoolerTask::class, ['unique' => true]);
         return true;

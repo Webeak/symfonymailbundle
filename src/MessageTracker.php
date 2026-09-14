@@ -235,10 +235,11 @@ class MessageTracker
      * Tell the tracker that a tracked message or link has changed so it can persist it if necessary.
      *
      * @param TrackedMessageEntityInterface|TrackedLinkEntityInterface $entity
+     * @param bool $force Queue this entity even when its initial persistence is caller-managed.
      *
      * @throws
      */
-    public function persist($entity)
+    public function persist($entity, bool $force = false)
     {
         if (!($entity instanceof TrackedMessageEntityInterface) && !($entity instanceof TrackedLinkEntityInterface)) {
             $this->errorTracker->trackAndThrow(new InvalidArgumentException(sprintf(
@@ -249,28 +250,43 @@ class MessageTracker
         }
         $autoPersist = in_array($entity->getIdentifier(), $this->autoPersistEntitiesIdentifiers);
         $alreadyPersisted = in_array($entity, $this->waitingForPersist, true);
-        if (($autoPersist || $this->hasBeenFlushed) && !$alreadyPersisted) {
+        if (($force || $autoPersist || $this->hasBeenFlushed) && !$alreadyPersisted) {
             $this->waitingForPersist[] = $entity;
         }
     }
 
     /**
      * Persist and flush all entities waiting to be written in the database.
+     *
+     * Strict flushes must commit before returning so a separate mail consumer
+     * can read the tracking rows. Never commit a caller's transaction here.
+     *
+     * @param bool $throwOnError Reject open transactions and propagate persistence failures.
      */
-    public function flush()
+    public function flush(bool $throwOnError = false)
     {
         try {
+            if ($throwOnError && $this->entityManager->getConnection()->isTransactionActive()) {
+                throw new RuntimeException('Tracked messages must be queued outside an active database transaction.');
+            }
             while (count($this->waitingForPersist) > 0) {
-                $batch = array_splice($this->waitingForPersist, 0, 100);
+                $batch = array_slice($this->waitingForPersist, 0, 100);
                 foreach ($batch as $entity) {
                     $this->entityManager->persist($entity);
                 }
                 $this->entityManager->flush($batch);
-                sleep(1);
+                // Do not lose the batch if persistence fails.
+                array_splice($this->waitingForPersist, 0, count($batch));
+                if (count($this->waitingForPersist) > 0) {
+                    sleep(1);
+                }
             }
             $this->waitingForPersist = [];
             $this->hasBeenFlushed = true;
         } catch (\Exception | \Throwable $e) {
+            if ($throwOnError) {
+                throw $e;
+            }
             $this->errorTracker->track(new RuntimeException(
                 sprintf('Failed to flush tracking entities. Reason: "%s".', $e->getMessage()),
                 0,
